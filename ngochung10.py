@@ -1,6 +1,6 @@
 '''
 =============================================================================
-ĐỀ BÀI: Điều khiển Động cơ Servo qua cảm biến siêu âm (HC-SR04) dùng gpiozero:
+ĐỀ BÀI: Bài 10 - Điều khiển Động cơ Servo qua cảm biến siêu âm (HC-SR04) dùng gpiozero:
 - Khoảng cách < 20cm -> Servo quay 45° trong 1 giây rồi về 0°
 - 20cm <= Khoảng cách <= 40cm -> Servo quay 90° trong 1 giây rồi về 0°
 - Khoảng cách > 40cm -> Servo quay 135° trong 1 giây rồi về 0°

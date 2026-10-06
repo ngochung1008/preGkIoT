@@ -1,39 +1,41 @@
 '''
 =============================================================================
-ĐỀ BÀI 11 VÀ YÊU CẦU HỆ THỐNG:
-1. Đọc dữ liệu trực tuyến: Gửi HTTP Request tới wttr.in API (dùng HTTP thường) 
+ĐỀ BÀI 13 VÀ YÊU CẦU HỆ THỐNG:
+1. Đọc dữ liệu trực tuyến: Gửi HTTP Request tới wttr.in API (HTTP thường) 
    để lấy dữ liệu thời tiết (Nhiệt độ & Độ ẩm) theo tên thành phố nhập từ bàn phím.
 2. Không cần đăng ký tài khoản: Sử dụng API mở hoàn toàn miễn phí.
-3. Điều khiển thiết bị: Dùng mạch L298N kết hợp thư viện gpiozero để điều khiển 
-   động cơ DC theo đúng 3 điều kiện logic (đã hiệu chỉnh theo nhiệt độ thực tế):
-   - Trường hợp 1: Nhiệt độ < 18°C VÀ Độ ẩm < 75% -> Quay thuận chậm (35%).
-   - Trường hợp 2: 18°C <= Nhiệt độ <= 20°C VÀ Độ ẩm >= 75% -> Quay nghịch chậm (35%).
-   - Trường hợp 3: Nhiệt độ > 20°C VÀ Độ ẩm >= 75% -> Quay thuận nhanh (90%).
-   - Trường hợp an toàn: Ngoài các điều kiện trên -> Dừng động cơ (Stop).
+3. Điều khiển thiết bị: Dùng thư viện gpiozero điều khiển ĐỘNG CƠ SERVO (SG90) 
+   theo 3 điều kiện logic (quay đến góc mục tiêu trong 1 giây rồi hồi vị về 0°):
+   - Trường hợp 1: Nhiệt độ < 18°C VÀ Độ ẩm < 75% -> Quay 45° trong 1s rồi về 0°.
+   - Trường hợp 2: 18°C <= Nhiệt độ <= 20°C VÀ Độ ẩm >= 75% -> Quay 90° trong 1s rồi về 0°.
+   - Trường hợp 3: Nhiệt độ > 20°C VÀ Độ ẩm >= 75% -> Quay 135° trong 1s rồi về 0°.
+   - Trường hợp an toàn: Ngoài các điều kiện trên -> Giữ servo ở 0°.
 
 =============================================================================
 SƠ ĐỒ LẮP MẠCH (WIRING GUIDE):
-1. Mạch L298N & Động cơ DC:
-   - Chân ENA (PWM tốc độ): Nối vào GPIO 22 (Nhớ tháo jumper màu đen trên L298N)
-   - Chân IN1 (Chiều quay 1): Nối vào GPIO 17
-   - Chân IN2 (Chiều quay 2): Nối vào GPIO 27
-   - Động cơ DC (Motor A): Nối trực tiếp vào 2 cực ngõ ra Motor A của L298N.
-   - Nguồn cấp: Cấp nguồn ngoài (pin 9V hoặc nguồn 12V) cho L298N. 
-     [CỰC KỲ QUAN TRỌNG]: Phải nối chung chân GND của nguồn ngoài với chân GND của Raspberry Pi.
+1. Động cơ Servo SG90:
+   - Dây Tín hiệu (Màu Cam hoặc Vàng): Nối vào GPIO 18 của Raspberry Pi
+   - Dây Dương nguồn VCC (Màu Đỏ): Nối vào chân 5V của Raspberry Pi
+   - Dây Âm nguồn GND (Màu Nâu hoặc Đen): Nối vào chân GND của Raspberry Pi
 =============================================================================
 '''
 
 import time
 import requests
-from gpiozero import Motor
+from gpiozero import AngularServo
 
-# Khởi tạo động cơ DC bằng thư viện gpiozero
-# forward = IN1 (GPIO 17), backward = IN2 (GPIO 27), enable = ENA (GPIO 22)
-motor = Motor(forward=17, backward=27, enable=22)
+# Khởi tạo Động cơ Servo ở chân GPIO 18 với dải xung chuẩn cho SG90 (0.5ms - 2.5ms)
+servo = AngularServo(
+    18, 
+    min_angle=0, 
+    max_angle=180, 
+    min_pulse_width=0.0005,  # 0.5 ms tương ứng 0 độ
+    max_pulse_width=0.0025   # 2.5 ms tương ứng 180 độ
+)
 
 def get_weather_data(city_name):
     """
-    Hàm gọi wttr.in qua HTTP thường (tránh triệt để lỗi SSL EOF trên Raspberry Pi).
+    Hàm gọi wttr.in qua HTTP thường để lấy Nhiệt độ (°C) và Độ ẩm (%).
     """
     try:
         url = f"http://wttr.in/{city_name}?format=j1"
@@ -62,12 +64,12 @@ def get_weather_data(city_name):
         return None, None
 
 def main():
-    """Vòng lặp chính của chương trình"""
+    """Vòng lặp chính của chương trình: Web API Nhiệt/Ẩm -> Động cơ Servo."""
     print("==================================================")
-    print(" HỆ THỐNG IOT: LẤY DỮ LIỆU WEB API ĐIỀU KHIỂN ĐỘNG CƠ")
+    print(" HỆ THỐNG IOT: LẤY WEB API THỜI TIẾT ĐIỀU KHIỂN ĐỘNG CƠ SERVO")
     print("==================================================")
     
-    city = input("Nhập tên thành phố bạn muốn kiểm tra (Ví dụ: Hanoi, Da Nang, Tokyo, London): ").strip()
+    city = input("Nhập tên thành phố bạn muốn kiểm tra (Ví dụ: Da Nang, Hanoi, Tokyo, London): ").strip()
     
     if not city:
         city = "Da Nang"
@@ -86,31 +88,36 @@ def main():
                 print(f"💧 Độ ẩm hiện tại    : {humidity}%")
                 print(f"--------------------------------------------------")
                 
-                # THỰC HIỆN 3 ĐIỀU KIỆN ĐÃ ĐIỀU CHỈNH NGƯỠNG:
+                target_angle = None
                 
-                # Điều kiện 1: Nhiệt độ < 18°C VÀ Độ ẩm < 75% -> Quay thuận chậm (35%)
+                # THỰC HIỆN 3 ĐIỀU KIỆN ĐIỀU KHIỂN SERVO:
+                
+                # Điều kiện 1: Nhiệt độ < 18°C VÀ Độ ẩm < 75% -> Quay 45°
                 if temperature < 18.0 and humidity < 75.0:
-                    motor.forward(speed=0.35)
-                    print("-> [ĐIỀU KIỆN 1] Nhiệt độ < 18 & Độ ẩm < 75: Quay thuận chậm (35%)")
+                    target_angle = 45
+                    print("-> [ĐIỀU KIỆN 1] Nhiệt độ < 18 & Độ ẩm < 75: Quay chuẩn 45°")
                     
-                # Điều kiện 2: 18°C <= Nhiệt độ <= 20°C VÀ Độ ẩm >= 75% -> Quay nghịch chậm (35%)
+                # Điều kiện 2: 18°C <= Nhiệt độ <= 20°C VÀ Độ ẩm >= 75% -> Quay 90°
                 elif 18.0 <= temperature <= 20.0 and humidity >= 75.0:
-                    motor.backward(speed=0.35)
-                    print("-> [ĐIỀU KIỆN 2] 18 <= temperature <= 20 & Độ ẩm >= 75: Quay nghịch chậm (35%)")
+                    target_angle = 90
+                    print("-> [ĐIỀU KIỆN 2] 18 <= Temp <= 20 & Độ ẩm >= 75: Quay chuẩn 90°")
                     
-                # Điều kiện 3: Nhiệt độ > 20°C VÀ Độ ẩm >= 75% -> Quay thuận nhanh (90%)
-                # (Với nhiệt độ Hà Nội hiện tại ~23°C và độ ẩm 91%, điều kiện này sẽ kích hoạt ngay lập tức!)
+                # Điều kiện 3: Nhiệt độ > 20°C VÀ Độ ẩm >= 75% -> Quay 135°
                 elif temperature > 20.0 and humidity >= 75.0:
-                    motor.forward(speed=0.90)
-                    print("-> [ĐIỀU KIỆN 3] Nhiệt độ > 20 & Độ ẩm >= 75: Quay thuận nhanh (90%)")
+                    target_angle = 135
+                    print("-> [ĐIỀU KIỆN 3] Nhiệt độ > 20 & Độ ẩm >= 75: Quay chuẩn 135°")
                     
-                # Trường hợp an toàn khác -> Dừng động cơ
+                # Thực hiện quay góc chỉ định, giữ 1 giây rồi hồi vị về 0°
+                if target_angle is not None:
+                    servo.angle = target_angle
+                    time.sleep(1.0)
+                    servo.angle = 0
+                    print("-> Servo đã hồi vị về 0°")
                 else:
-                    motor.stop()
-                    print("-> [AN TOÀN] Ngoài dải điều kiện thiết lập: Dừng động cơ (Stop)")
+                    print("-> [AN TOÀN] Ngoài dải điều kiện: Servo giữ tại 0°")
+                    servo.angle = 0
             else:
                 print("[!] Chưa nhận được dữ liệu, đang thử kết nối lại sau 5 giây...")
-                motor.stop()
                 
             print("==================================================")
             time.sleep(30.0)
@@ -118,7 +125,7 @@ def main():
     except KeyboardInterrupt:
         print("\n[!] Đã ngắt chương trình. Đang dọn dẹp và thoát...")
     finally:
-        motor.stop()
+        servo.detach()
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,6 @@
 '''
 =============================================================================
-ĐỀ BÀI: Điều khiển Động cơ Servo qua cảm biến DHT11 (đã tinh chỉnh góc chuẩn):
+ĐỀ BÀI: Bài 9 - Điều khiển Động cơ Servo qua cảm biến DHT11 (đã tinh chỉnh góc chuẩn):
 - Nhiệt độ < 28°C VÀ Độ ẩm < 75% -> Quay 45° trong 1 giây rồi về 0°
 - 28°C <= Nhiệt độ <= 32°C VÀ Độ ẩm >= 75% -> Quay 90° trong 1 giây rồi về 0°
 - Nhiệt độ > 32°C VÀ Độ ẩm >= 75% -> Quay 135° trong 1 giây rồi về 0°

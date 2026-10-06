@@ -1,6 +1,6 @@
 '''
 =============================================================================
-ĐỀ BÀI: Điều khiển động cơ DC qua cảm biến siêu âm (HC-SR04) dùng thư viện gpiozero:
+ĐỀ BÀI: Bài 6 - Điều khiển động cơ DC qua cảm biến siêu âm (HC-SR04) dùng thư viện gpiozero:
 - Khoảng cách < 20cm -> Quay thuận chậm (speed = 0.35)
 - 20cm <= Khoảng cách <= 40cm -> Quay nghịch chậm (speed = 0.35)
 - Khoảng cách > 40cm -> Quay thuận nhanh (speed = 0.90)

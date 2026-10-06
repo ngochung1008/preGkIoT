@@ -1,6 +1,6 @@
 '''
 =============================================================================
-ĐỀ BÀI: Điều khiển động cơ bước (28BYJ-48) qua cảm biến siêu âm (HC-SR04) 
+ĐỀ BÀI: Bài 8 - Điều khiển động cơ bước (28BYJ-48) qua cảm biến siêu âm (HC-SR04) 
 dùng thư viện gpiozero (cho cảm biến) và RpiMotorLib (cho động cơ):
 - Khoảng cách < 20cm -> Quay thuận 90 độ
 - 20cm <= Khoảng cách <= 40cm -> Quay nghịch 180 độ

@@ -1,6 +1,6 @@
 '''
 =============================================================================
-ĐỀ BÀI: Điều khiển động cơ bước (28BYJ-48) qua DHT11 dùng thư viện RpiMotorLib:
+ĐỀ BÀI: Bài 7 - Điều khiển động cơ bước (28BYJ-48) qua DHT11 dùng thư viện RpiMotorLib:
 - Nhiệt độ < 28°C VÀ Độ ẩm < 75% -> Quay thuận 90 độ
 - 28°C <= Nhiệt độ <= 32°C VÀ Độ ẩm >= 75% -> Quay nghịch 180 độ
 - Nhiệt độ > 32°C VÀ Độ ẩm >= 75% -> Quay nghịch 90 độ
